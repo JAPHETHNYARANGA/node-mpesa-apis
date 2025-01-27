@@ -1,25 +1,29 @@
 services:
   app:
     build: .
-    container_name: node mpesa client
+    container_name: node_mpesa_client
     environment:
-    - DATABASE_URL=postgresql://postgres:postgres@db:5432/nodempesaclient
-    - NODE_ENV=development
-    - PORT=5003
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/nodempesaclient
+      - NODE_ENV=development
+      - PORT=5003
     ports:
-      - "5001:5001"
+      - "5000:5000"
     depends_on:
       - db
     volumes:
       - .:/app
+
   db:
     image: postgres:13-alpine
     container_name: postgres-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD : postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: nodempesaclient
     ports: 
       - "5500:5500"
     volumes:
-      - postgres-data:    
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -12,7 +12,9 @@
   "description": "This is a containerised node app  consuming  mpesa payment apis",
   "dependencies": {
     "@prisma/client": "^6.2.1",
+    "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.1",
