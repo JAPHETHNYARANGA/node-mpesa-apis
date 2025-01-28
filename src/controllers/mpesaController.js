@@ -1,14 +1,13 @@
 import https from 'https'; // Using import instead of require
 
-const username = process.env.CONSUMER_KEY; 
-const password = process.env.CONSUMER_SECRET;
-
 
 // Authorization function to get the access token
 const authorize = () => {
   return new Promise((resolve, reject) => {
-    const url = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
+    const url = 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
 
+    const username = process.env.CONSUMER_KEY; 
+    const password = process.env.CONSUMER_SECRET;
     // Create the Basic Auth Header (Base64 encoded credentials)
     const authHeader = `Basic ${Buffer.from(username + ':' + password).toString('base64')}`;
 
@@ -58,20 +57,35 @@ const getStkPush = async (req, res) => {
       return res.status(400).json({ error: 'Amount and PhoneNumber are required.' });
     }
 
+    const date = new Date();
+    const timestamp =
+    date.getFullYear() +
+    ("0" + (date.getMonth() + 1)).slice(-2) +
+    ("0" + date.getDate()).slice(-2) +
+    ("0" + date.getHours()).slice(-2) +
+    ("0" + date.getMinutes()).slice(-2) +
+    ("0" + date.getSeconds()).slice(-2);
+    const shortCode = process.env.SHORTCODE; 
+    const passkey = process.env.PASSKEY;
+
     // Call the authorize function to get the access token dynamically
     const accessToken = await authorize();
 
+
+    const stk_password = Buffer.from(shortCode + passkey + timestamp).toString('base64');
+
+
     // STK Push data (customize it as per your needs)
     const stkPushData = {
-      BusinessShortCode: 174379,  // Replace with your business shortcode
-      Password: 'MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUwMTI3MTEwMDEy',
-      Timestamp: '20250127110012',  // Timestamp in format YYYYMMDDHHMMSS
+      BusinessShortCode: shortCode,  // Replace with your business shortcode
+      Password: stk_password,
+      Timestamp: timestamp,  // Timestamp in format YYYYMMDDHHMMSS
       TransactionType: 'CustomerPayBillOnline',
-      Amount: Amount,  // Amount to be paid
-      PartyA: PhoneNumber,  // The phone number making the payment
-      PartyB: 174379,  // Your business shortcode
-      PhoneNumber: PhoneNumber,  // The phone number making the payment
-      CallBackURL: 'https://mydomain.com/path',  // Replace with your callback URL
+      Amount: "2",  // Amount to be paid
+      PartyA: '254729736134',  // The phone number making the payment
+      PartyB: shortCode,  // Your business shortcode
+      PhoneNumber: '254729736134',  // The phone number making the payment
+      CallBackURL: 'https://7270-102-68-76-239.ngrok-free.app/api/callBackUrl',  // Replace with your callback URL
       AccountReference: 'CompanyXLTD',  // Account reference
       TransactionDesc: 'Payment of X'  // Description of the transaction
     };
@@ -85,7 +99,7 @@ const getStkPush = async (req, res) => {
       }
     };
 
-    const stkPushReq = https.request('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', stkPushOptions, (response) => {
+    const stkPushReq = https.request('https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest', stkPushOptions, (response) => {
       let data = '';
 
       response.on('data', (chunk) => {
@@ -121,4 +135,19 @@ const getStkPush = async (req, res) => {
   }
 };
 
-export default { getStkPush };
+const getCallbackUrl = async (req, res) => {
+    try {
+      // Process callback response from M-Pesa
+      const callbackData = req.body; // Assuming M-Pesa sends data in request body
+  
+      // You can store it or log the response
+      console.log(callbackData);
+      
+      res.status(200).json({ message: 'Callback received successfully', data: callbackData });
+    } catch (error) {
+      console.error('Error receiving callback:', error);
+      res.status(500).json({ error: 'Failed to handle callback' });
+    }
+  };
+
+export default { getStkPush, getCallbackUrl };
